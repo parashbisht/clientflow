@@ -14,11 +14,11 @@ export function KpiCard({
 }: {
   label: string;
   value: string;
-  change: number;
+  change?: number;
   hint: string;
   icon?: ReactNode;
 }) {
-  const up = change >= 0;
+  const up = (change ?? 0) >= 0;
   return (
     <Card size="sm" className="shadow-none">
       <CardContent className="pt-1">
@@ -32,16 +32,18 @@ export function KpiCard({
         </div>
         <p className="mt-3 font-heading text-2xl tracking-tight tabular-nums">{value}</p>
         <div className="mt-2 flex items-center gap-2 text-xs">
-          <span
-            className={cn(
-              "inline-flex items-center gap-0.5 font-medium",
-              up ? "text-[oklch(0.42_0.08_155)]" : "text-destructive",
-            )}
-          >
-            {up ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />}
-            {up ? "+" : ""}
-            {change.toFixed(1)}%
-          </span>
+          {change != null ? (
+            <span
+              className={cn(
+                "inline-flex items-center gap-0.5 font-medium",
+                up ? "text-[oklch(0.42_0.08_155)]" : "text-destructive",
+              )}
+            >
+              {up ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />}
+              {up ? "+" : ""}
+              {change.toFixed(1)}%
+            </span>
+          ) : null}
           <span className="text-muted-foreground">{hint}</span>
         </div>
       </CardContent>

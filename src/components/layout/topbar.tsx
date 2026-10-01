@@ -14,7 +14,6 @@ import { toast } from "sonner";
 import { UserAvatar } from "@/components/common/user-avatar";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { LeadFormDialog } from "@/components/leads/lead-form-dialog";
-import { TaskFormDialog } from "@/components/tasks/task-form-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -39,7 +38,6 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
   const router = useRouter();
   const [commandOpen, setCommandOpen] = useState(false);
   const [leadOpen, setLeadOpen] = useState(false);
-  const [taskOpen, setTaskOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
 
   return (
@@ -60,7 +58,7 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
           className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md border bg-card px-2.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/60 sm:max-w-md"
         >
           <Search className="size-4 shrink-0" />
-          <span className="truncate">Search clients, projects, invoices…</span>
+          <span className="truncate">Search leads…</span>
           <kbd className="ml-auto hidden rounded border bg-background px-1.5 py-0.5 text-[10px] font-medium sm:inline">
             ⌘K
           </kbd>
@@ -82,10 +80,6 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
             </Tooltip>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => setLeadOpen(true)}>Lead</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/clients")}>Client</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/projects")}>Project</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTaskOpen(true)}>Task</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/invoices")}>Invoice</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>
@@ -147,22 +141,21 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
       </header>
       <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
       <LeadFormDialog open={leadOpen} onOpenChange={setLeadOpen} />
-      <TaskFormDialog open={taskOpen} onOpenChange={setTaskOpen} />
       <Sheet open={helpOpen} onOpenChange={setHelpOpen}>
         <SheetContent side="right" className="sm:max-w-md">
           <SheetTitle className="p-4 pb-0">Help</SheetTitle>
           <div className="space-y-4 p-4 text-sm text-muted-foreground">
             <p>
-              ClientFlow is a demo workspace. Create, edit, and move records in local
-              state — nothing is sent to a server.
+              ClientFlow is a demo workspace for managing leads. Changes stay in local
+              state and nothing is sent to a server.
             </p>
             <p>
               Press <kbd className="rounded border px-1">⌘K</kbd> to search. Use Create
-              to add a lead or task from anywhere.
+              to add a lead from anywhere.
             </p>
             <p>
-              The client portal is a separate surface for Harbor & Pine. Open it from
-              the user menu.
+              Keep the pipeline current by moving leads between stages and adding notes
+              to each lead record.
             </p>
           </div>
         </SheetContent>

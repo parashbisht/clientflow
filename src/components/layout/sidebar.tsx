@@ -2,15 +2,7 @@
 
 import { cn } from "cn";
 import {
-  BarChart3,
-  Briefcase,
-  CheckSquare,
-  FileText,
-  FolderOpen,
   LayoutDashboard,
-  Receipt,
-  Settings,
-  Users,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -21,26 +13,14 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useApp } from "@/store/app-store";
 
-const primary = [
+export const mobileNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/leads", label: "Leads", icon: UsersRound },
-  { href: "/clients", label: "Clients", icon: Users },
-  { href: "/projects", label: "Projects", icon: Briefcase },
-  { href: "/tasks", label: "Tasks", icon: CheckSquare },
-  { href: "/invoices", label: "Invoices", icon: Receipt },
-  { href: "/files", label: "Files", icon: FolderOpen },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-];
-
-const workspace = [
-  { href: "/team", label: "Team", icon: Users },
-  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 function NavLink({
@@ -117,15 +97,7 @@ export function Sidebar({
       </div>
       <ScrollArea className="flex-1 px-3">
         <nav className="grid gap-0.5" aria-label="Primary">
-          {primary.map((item) => (
-            <NavLink key={item.href} {...item} onNavigate={onNavigate} />
-          ))}
-        </nav>
-        <p className="mt-6 mb-2 px-2 text-[11px] font-medium tracking-[0.14em] text-sidebar-foreground/40 uppercase">
-          Workspace
-        </p>
-        <nav className="grid gap-0.5" aria-label="Workspace">
-          {workspace.map((item) => (
+          {mobileNavItems.map((item) => (
             <NavLink key={item.href} {...item} onNavigate={onNavigate} />
           ))}
         </nav>
@@ -142,20 +114,11 @@ export function Sidebar({
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" side="top" className="w-56">
-            <DropdownMenuLabel>Workspace</DropdownMenuLabel>
-            <DropdownMenuItem>Northline Studio</DropdownMenuItem>
-            <DropdownMenuItem>Atelier Collective</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem render={<Link href="/settings" />}>
-              Profile & settings
-            </DropdownMenuItem>
-            <DropdownMenuItem render={<Link href="/" />}>Sign out</DropdownMenuItem>
+            <DropdownMenuLabel>{currentUser.name}</DropdownMenuLabel>
+            <DropdownMenuItem render={<Link href="/dashboard" />}>Dashboard</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
     </aside>
   );
 }
-
-export const mobileNavItems = primary.slice(0, 5);
-export const allNavItems = [...primary, ...workspace];

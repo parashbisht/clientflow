@@ -10,25 +10,12 @@ import {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
-import { clientsService, type ClientInput } from "@/services/clients";
-import { filesService } from "@/services/files";
-import { invoicesService } from "@/services/invoices";
 import { leadsService, type LeadInput } from "@/services/leads";
-import { projectsService, type ProjectInput } from "@/services/projects";
-import { tasksService, type TaskInput } from "@/services/tasks";
-import { activitiesService, analyticsService, teamService } from "@/services/files";
+import { seed } from "@/data/seed";
 import type {
   Activity,
-  Client,
-  FileRecord,
-  Invoice,
-  InvoiceStatus,
   Lead,
   LeadStatus,
-  Project,
-  RevenuePoint,
-  Task,
-  TaskStatus,
   TeamMember,
 } from "@/types";
 
@@ -37,13 +24,7 @@ interface AppState {
   error: string | null;
   team: TeamMember[];
   leads: Lead[];
-  clients: Client[];
-  projects: Project[];
-  tasks: Task[];
-  invoices: Invoice[];
-  files: FileRecord[];
   activities: Activity[];
-  revenue: RevenuePoint[];
   currentUser: TeamMember;
 }
 
@@ -53,19 +34,7 @@ interface AppActions {
   updateLead: (id: string, patch: Partial<Lead>) => Promise<void>;
   moveLead: (id: string, status: LeadStatus) => Promise<void>;
   deleteLead: (id: string) => Promise<void>;
-  createClient: (input: ClientInput) => Promise<Client>;
-  addClientNote: (id: string, body: string) => Promise<void>;
-  createProject: (input: ProjectInput) => Promise<Project>;
-  createTask: (input: TaskInput) => Promise<Task>;
-  updateTask: (id: string, patch: Partial<Task>) => Promise<void>;
-  moveTask: (id: string, status: TaskStatus) => Promise<void>;
-  deleteTask: (id: string) => Promise<void>;
-  markInvoice: (id: string, status: InvoiceStatus) => Promise<void>;
-  createInvoice: (input: Parameters<typeof invoicesService.create>[0]) => Promise<Invoice>;
-  uploadFile: (input: Omit<FileRecord, "id" | "uploadedAt">) => Promise<void>;
   memberById: (id: string) => TeamMember | undefined;
-  clientById: (id: string) => Client | undefined;
-  projectById: (id: string) => Project | undefined;
 }
 
 type AppContextValue = AppState & AppActions;
@@ -87,47 +56,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [files, setFiles] = useState<FileRecord[]>([]);
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [revenue, setRevenue] = useState<RevenuePoint[]>([]);
+  const [activities, setActivities] = useState<Activity[]>(seed.activities);
 
   const refresh = useCallback(async () => {
     try {
+      const [leadsData] = await Promise.all([leadsService.list()]);
       setError(null);
-      const [
-        teamData,
-        leadsData,
-        clientsData,
-        projectsData,
-        tasksData,
-        invoicesData,
-        filesData,
-        activitiesData,
-        revenueData,
-      ] = await Promise.all([
-        teamService.list(),
-        leadsService.list(),
-        clientsService.list(),
-        projectsService.list(),
-        tasksService.list(),
-        invoicesService.list(),
-        filesService.list(),
-        activitiesService.list(),
-        analyticsService.revenue(),
-      ]);
-      setTeam([...teamData]);
+      setTeam([...seed.team]);
       setLeads([...leadsData]);
-      setClients([...clientsData]);
-      setProjects([...projectsData]);
-      setTasks([...tasksData]);
-      setInvoices([...invoicesData]);
-      setFiles([...filesData]);
-      setActivities([...activitiesData]);
-      setRevenue([...revenueData]);
     } catch {
       setError("We couldn’t load the workspace. Try again.");
     } finally {
@@ -136,8 +72,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    let active = true;
+
+    async function loadInitialData() {
+      try {
+        const leadsData = await leadsService.list();
+        if (!active) return;
+        setTeam([...seed.team]);
+        setLeads([...leadsData]);
+      } catch {
+        if (active) setError("We couldn’t load the workspace. Try again.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    void loadInitialData();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const currentUser = team.find((member) => member.id === "u_alex") ?? fallbackUser;
 
@@ -145,25 +99,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     (id: string) => team.find((member) => member.id === id),
     [team],
   );
-  const clientById = useCallback(
-    (id: string) => clients.find((client) => client.id === id),
-    [clients],
-  );
-  const projectById = useCallback(
-    (id: string) => projects.find((project) => project.id === id),
-    [projects],
-  );
-
   const createLead = useCallback(async (input: LeadInput) => {
     const lead = await leadsService.create(input);
-    await activitiesService.add({
+    const activity: Activity = {
+      id: `a_${Date.now()}`,
       type: "lead_created",
       title: `New lead: ${lead.company}`,
       detail: `${lead.contactName} added to the pipeline.`,
+      createdAt: new Date().toISOString(),
       actorId: currentUser.id,
       entityType: "lead",
       entityId: lead.id,
-    });
+    };
+    setActivities((current) => [activity, ...current]);
     toast.success("Lead created", { description: lead.company });
     await refresh();
     return lead;
@@ -186,133 +134,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await refresh();
   }, [refresh]);
 
-  const createClient = useCallback(async (input: ClientInput) => {
-    const client = await clientsService.create(input);
-    toast.success("Client added", { description: client.company });
-    await refresh();
-    return client;
-  }, [refresh]);
-
-  const addClientNote = useCallback(async (id: string, body: string) => {
-    await clientsService.addNote(id, body, currentUser.id);
-    toast.success("Note saved");
-    await refresh();
-  }, [currentUser.id, refresh]);
-
-  const createProject = useCallback(async (input: ProjectInput) => {
-    const project = await projectsService.create(input);
-    toast.success("Project created", { description: project.name });
-    await refresh();
-    return project;
-  }, [refresh]);
-
-  const createTask = useCallback(async (input: TaskInput) => {
-    const task = await tasksService.create(input);
-    toast.success("Task created", { description: task.title });
-    await refresh();
-    return task;
-  }, [refresh]);
-
-  const updateTask = useCallback(async (id: string, patch: Partial<Task>) => {
-    await tasksService.update(id, patch);
-    toast.success("Task updated");
-    await refresh();
-  }, [refresh]);
-
-  const moveTask = useCallback(async (id: string, status: TaskStatus) => {
-    await tasksService.move(id, status);
-    await refresh();
-  }, [refresh]);
-
-  const deleteTask = useCallback(async (id: string) => {
-    await tasksService.remove(id);
-    toast.success("Task deleted");
-    await refresh();
-  }, [refresh]);
-
-  const markInvoice = useCallback(async (id: string, status: InvoiceStatus) => {
-    await invoicesService.updateStatus(id, status);
-    toast.success(status === "paid" ? "Invoice marked as paid" : "Invoice updated");
-    await refresh();
-  }, [refresh]);
-
-  const createInvoice = useCallback(async (input: Parameters<typeof invoicesService.create>[0]) => {
-    const invoice = await invoicesService.create(input);
-    toast.success("Invoice drafted", { description: invoice.number });
-    await refresh();
-    return invoice;
-  }, [refresh]);
-
-  const uploadFile = useCallback(async (input: Omit<FileRecord, "id" | "uploadedAt">) => {
-    const file = await filesService.create(input);
-    toast.success("File added", { description: file.name });
-    await refresh();
-  }, [refresh]);
-
   const value = useMemo<AppContextValue>(
     () => ({
       loading,
       error,
       team,
       leads,
-      clients,
-      projects,
-      tasks,
-      invoices,
-      files,
       activities,
-      revenue,
       currentUser,
       refresh,
       createLead,
       updateLead,
       moveLead,
       deleteLead,
-      createClient,
-      addClientNote,
-      createProject,
-      createTask,
-      updateTask,
-      moveTask,
-      deleteTask,
-      markInvoice,
-      createInvoice,
-      uploadFile,
       memberById,
-      clientById,
-      projectById,
     }),
     [
       loading,
       error,
       team,
       leads,
-      clients,
-      projects,
-      tasks,
-      invoices,
-      files,
       activities,
-      revenue,
       currentUser,
       refresh,
       createLead,
       updateLead,
       moveLead,
       deleteLead,
-      createClient,
-      addClientNote,
-      createProject,
-      createTask,
-      updateTask,
-      moveTask,
-      deleteTask,
-      markInvoice,
-      createInvoice,
-      uploadFile,
       memberById,
-      clientById,
-      projectById,
     ],
   );
 

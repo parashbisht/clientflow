@@ -1,7 +1,7 @@
 import { getDb, nextId, wait } from "@/data/db";
 import type { Lead, LeadStatus } from "@/types";
 
-export type LeadInput = Omit<Lead, "id" | "createdAt" | "lastActivityAt" | "notes" | "timeline" | "messages" | "taskTitles"> & {
+export type LeadInput = Omit<Lead, "id" | "createdAt" | "lastActivityAt" | "notes" | "timeline" | "messages"> & {
   notes?: Lead["notes"];
 };
 
@@ -32,7 +32,6 @@ export const leadsService = {
         },
       ],
       messages: [],
-      taskTitles: [],
     };
     getDb().leads.unshift(lead);
     return lead;

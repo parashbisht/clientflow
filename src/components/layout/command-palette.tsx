@@ -19,7 +19,7 @@ export function CommandPalette({
   onOpenChange: (open: boolean) => void;
 }) {
   const router = useRouter();
-  const { clients, projects, invoices, leads } = useApp();
+  const { leads } = useApp();
 
   function go(href: string) {
     router.push(href);
@@ -35,44 +35,16 @@ export function CommandPalette({
           {[
             ["/dashboard", "Dashboard"],
             ["/leads", "Leads"],
-            ["/clients", "Clients"],
-            ["/projects", "Projects"],
-            ["/tasks", "Tasks"],
-            ["/invoices", "Invoices"],
-            ["/files", "Files"],
-            ["/analytics", "Analytics"],
-            ["/settings", "Settings"],
           ].map(([href, label]) => (
             <CommandItem key={href} onSelect={() => go(href)}>
               {label}
             </CommandItem>
           ))}
         </CommandGroup>
-        <CommandGroup heading="Clients">
-          {clients.map((client) => (
-            <CommandItem key={client.id} onSelect={() => go(`/clients/${client.id}`)}>
-              {client.company}
-            </CommandItem>
-          ))}
-        </CommandGroup>
-        <CommandGroup heading="Projects">
-          {projects.map((project) => (
-            <CommandItem key={project.id} onSelect={() => go(`/projects/${project.id}`)}>
-              {project.name}
-            </CommandItem>
-          ))}
-        </CommandGroup>
         <CommandGroup heading="Leads">
           {leads.map((lead) => (
-            <CommandItem key={lead.id} onSelect={() => go("/leads")}>
+            <CommandItem key={lead.id} onSelect={() => go(`/leads/${lead.id}`)}>
               {lead.company}
-            </CommandItem>
-          ))}
-        </CommandGroup>
-        <CommandGroup heading="Invoices">
-          {invoices.map((invoice) => (
-            <CommandItem key={invoice.id} onSelect={() => go(`/invoices/${invoice.id}`)}>
-              {invoice.number}
             </CommandItem>
           ))}
         </CommandGroup>
